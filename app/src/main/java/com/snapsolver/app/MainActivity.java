@@ -23,7 +23,6 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +38,7 @@ public class MainActivity extends Activity {
     private static final int MUTED = Color.rgb(84, 94, 128);
 
     private TextView status, permStatus, batteryStatus, keyStatus;
-    private Button toggle;
+    private Button toggle, autoBtn;
     private EditText keyIn;
     private boolean enableAfterPermission = false;
 
@@ -70,6 +69,24 @@ public class MainActivity extends Activity {
         toggle = bigButton("");
         toggle.setOnClickListener(v -> onToggle());
         root.addView(toggle, spaced(10));
+
+        autoBtn = bigButton("");
+        autoBtn.setBackground(round(BLUE, 18));
+        autoBtn.setOnClickListener(v -> {
+            if (Prefs.key(this).isEmpty()) { toast("먼저 1번에서 무료 Gemini 키를 넣어 주세요"); keyIn.requestFocus(); return; }
+            startActivity(new Intent(this, AutoCamActivity.class));
+        });
+        root.addView(autoBtn, spaced(10));
+        root.addView(text("자동 촬영: 휴대폰을 책 위에 세워 두면 정해진 간격마다 확인해서, 페이지가 바뀌었을 때만 찍어 풀어요. 같은 페이지는 다시 찍지 않아요.", 14, MUTED, false), spaced(6));
+        int[] secs = {5, 10, 20, 30};
+        int si = 1;
+        for (int i = 0; i < secs.length; i++) if (secs[i] == Prefs.interval(this)) si = i;
+        RadioGroup interval = radios(new String[]{"5초", "10초", "20초", "30초"}, si, i -> {
+            Prefs.setInterval(this, secs[i]);
+            refresh();
+        });
+        interval.setOrientation(RadioGroup.HORIZONTAL);
+        root.addView(interval);
 
         // 1. 키
         root.addView(header("1. 무료 Gemini 키 넣기 (처음 한 번)"));
@@ -123,12 +140,13 @@ public class MainActivity extends Activity {
         RadioGroup level = radios(levels, li, i -> Prefs.setLevel(this, levels[i]));
         level.setOrientation(RadioGroup.HORIZONTAL);
         root.addView(level);
-        Switch voice = new Switch(this);
-        voice.setText("답을 소리로 읽기");
-        voice.setTextSize(16);
-        voice.setChecked(Prefs.voice(this));
-        voice.setOnCheckedChangeListener((bv, on) -> Prefs.setVoice(this, on));
-        root.addView(voice, spaced(8));
+        root.addView(text("답을 소리로 읽기", 15, MUTED, true), spaced(8));
+        String[] modes = {"earphones", "always", "off"};
+        int mi = 0;
+        for (int i = 0; i < modes.length; i++) if (modes[i].equals(Prefs.voiceMode(this))) mi = i;
+        RadioGroup voice = radios(new String[]{"이어폰을 꼈을 때만 (도서관용)", "항상", "끄기"}, mi,
+                i -> Prefs.setVoiceMode(this, modes[i]));
+        root.addView(voice);
         TextView rateLabel = text("말 빠르기 ×" + String.format("%.1f", Prefs.rate(this)), 15, MUTED, false);
         root.addView(rateLabel, spaced(8));
         SeekBar rate = new SeekBar(this);
@@ -176,6 +194,7 @@ public class MainActivity extends Activity {
         status.setTextColor(on ? Color.WHITE : INK);
         status.setBackground(round(on ? BLUE : Color.rgb(238, 242, 252), 16));
         toggle.setText(on ? "자동 풀이 끄기" : "자동 풀이 켜기");
+        autoBtn.setText(Prefs.interval(this) + "초마다 자동 촬영 시작");
         toggle.setBackground(round(on ? Color.rgb(84, 94, 128) : RED, 18));
         keyStatus.setText(Prefs.key(this).isEmpty() ? "아직 키가 없어요" : "✓ 키가 저장돼 있어요");
         keyStatus.setTextColor(Prefs.key(this).isEmpty() ? RED : Color.rgb(17, 128, 79));

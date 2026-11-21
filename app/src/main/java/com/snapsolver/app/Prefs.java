@@ -28,8 +28,16 @@ final class Prefs {
     static String level(Context c) { return sp(c).getString("level", "보통"); }
     static void setLevel(Context c, String v) { sp(c).edit().putString("level", v).apply(); }
 
-    static boolean voice(Context c) { return sp(c).getBoolean("voice", true); }
-    static void setVoice(Context c, boolean v) { sp(c).edit().putBoolean("voice", v).apply(); }
+    /** "earphones"(이어폰 꼈을 때만, 기본) · "always"(항상) · "off"(끄기) */
+    static String voiceMode(Context c) {
+        SharedPreferences s = sp(c);
+        if (s.contains("voiceMode")) return s.getString("voiceMode", "earphones");
+        return s.getBoolean("voice", true) ? "earphones" : "off";
+    }
+    static void setVoiceMode(Context c, String v) { sp(c).edit().putString("voiceMode", v).apply(); }
+
+    static int interval(Context c) { return sp(c).getInt("interval", 10); }
+    static void setInterval(Context c, int v) { sp(c).edit().putInt("interval", v).apply(); }
 
     static float rate(Context c) { return sp(c).getFloat("rate", 1.0f); }
     static void setRate(Context c, float v) { sp(c).edit().putFloat("rate", v).apply(); }

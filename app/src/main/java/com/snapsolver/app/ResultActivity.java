@@ -59,6 +59,12 @@ public class ResultActivity extends Activity {
         public void speak(String text) {
             runOnUiThread(() -> {
                 if (!ttsReady || text == null) return;
+                if (!Voice.allowed(ResultActivity.this)) {
+                    android.widget.Toast.makeText(ResultActivity.this,
+                            "off".equals(Prefs.voiceMode(ResultActivity.this)) ? "소리로 읽기가 꺼져 있어요" : "이어폰을 끼면 들려 드려요",
+                            android.widget.Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 tts.setSpeechRate(Prefs.rate(ResultActivity.this));
                 tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "again");
             });

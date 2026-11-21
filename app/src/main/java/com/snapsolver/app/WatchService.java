@@ -282,7 +282,7 @@ public class WatchService extends Service {
     // ───── 소리 ─────
 
     private void speakIfOn(String text) {
-        if (Prefs.voice(this) && text != null && !text.isEmpty()) main.post(() -> speak(text));
+        if (Voice.allowed(this) && text != null && !text.isEmpty()) main.post(() -> speak(text));
     }
 
     private void speak(String text) {

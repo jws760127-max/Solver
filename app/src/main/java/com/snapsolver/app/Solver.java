@@ -113,6 +113,26 @@ final class Solver {
         } catch (Exception ignored) {
         }
 
+        return scaleRotate(bm, rotate);
+    }
+
+    /** 자동 촬영에서 찍은 JPEG를 방향을 맞추고 줄여요. */
+    static byte[] prepareBytes(byte[] raw, int rotate) throws IOException {
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(raw, 0, raw.length, bounds);
+        int longest = Math.max(bounds.outWidth, bounds.outHeight);
+        if (longest <= 0) throw new IOException("사진을 열 수 없어요");
+        int sample = 1;
+        while (longest / (sample * 2) >= 2048) sample *= 2;
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inSampleSize = sample;
+        Bitmap bm = BitmapFactory.decodeByteArray(raw, 0, raw.length, opts);
+        if (bm == null) throw new IOException("사진을 열 수 없어요");
+        return scaleRotate(bm, rotate);
+    }
+
+    private static byte[] scaleRotate(Bitmap bm, int rotate) {
         float scale = Math.min(1f, 2048f / Math.max(bm.getWidth(), bm.getHeight()));
         Matrix m = new Matrix();
         m.postScale(scale, scale);
