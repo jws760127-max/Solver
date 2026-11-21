@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.snapsolver.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.snapsolver.app'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    // 업데이트할 때도 같은 서명으로 덮어 설치되도록 고정 키를 써요 (개인용 앱이라 저장소에 함께 둬요)
+    signingConfigs {
+        release {
+            storeFile file('release.jks')
+            storePassword 'snapsolver'
+            keyAlias 'snap'
+            keyPassword 'snapsolver'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
