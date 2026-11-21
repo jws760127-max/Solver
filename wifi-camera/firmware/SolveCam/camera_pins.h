@@ -1,7 +1,7 @@
-// 보드별 카메라 핀. 기본은 AI-Thinker ESP32-CAM, XIAO ESP32S3 Sense는 CAMERA_MODEL_XIAO_ESP32S3로 빌드해요.
+// 보드별 카메라 핀. 기본은 AI-Thinker ESP32-CAM, 보드를 XIAO_ESP32S3로 고르면 XIAO 핀을 자동으로 써요.
 #pragma once
 
-#if defined(CAMERA_MODEL_XIAO_ESP32S3)
+#if defined(CAMERA_MODEL_XIAO_ESP32S3) || defined(ARDUINO_XIAO_ESP32S3)
 #define BOARD_NAME "XIAO ESP32S3 Sense"
 #define PWDN_GPIO_NUM  -1
 #define RESET_GPIO_NUM -1

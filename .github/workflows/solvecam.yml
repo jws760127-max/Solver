@@ -36,10 +36,7 @@ jobs:
         run: arduino-cli compile --fqbn esp32:esp32:esp32cam --export-binaries --output-dir out/esp32cam wifi-camera/firmware/SolveCam
 
       - name: Compile (XIAO ESP32S3 Sense)
-        run: >
-          arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32S3:PSRAM=opi
-          --build-property "compiler.cpp.extra_flags=-DCAMERA_MODEL_XIAO_ESP32S3"
-          --export-binaries --output-dir out/xiao wifi-camera/firmware/SolveCam
+        run: arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32S3:PSRAM=opi --export-binaries --output-dir out/xiao wifi-camera/firmware/SolveCam
 
       - name: Assemble install page
         run: |
