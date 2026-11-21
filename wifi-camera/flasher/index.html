@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SolveCam 설치</title>
+<script type="module" src="https://unpkg.com/esp-web-tools@10.1.0/dist/web/install-button.js?module"></script>
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#f5f7fc,#0b1120);--card:light-dark(#fff,#111a2d);--ink:light-dark(#141c35,#e9edf7);--mut:light-dark(#545e80,#9ca7c7);--line:light-dark(#d5dbea,#26324e);--blue:light-dark(#2643b8,#8ea4ff);--red:light-dark(#d62c1b,#ff6b57);--soft:light-dark(#eef2fc,#17213a)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 18px 60px}h1{font-size:clamp(30px,5vw,42px);line-height:1.1;margin:0 0 8px}h1 span{color:var(--red)}
+h2{font-size:21px;margin:34px 0 10px}p{margin:8px 0}.lead{color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:12px 0}
+ol{padding-left:1.3em;margin:8px 0}li{margin:6px 0}code{background:var(--soft);padding:2px 6px;border-radius:6px;font-size:15px}
+.boards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.boards .card{display:grid;gap:10px;align-content:start}.boards b{font-size:18px}.note{color:var(--mut);font-size:15px}
+esp-web-install-button button[slot=activate]{min-height:52px;width:100%;border:0;border-radius:14px;background:var(--blue);color:#fff;font-size:17px;font-weight:700;cursor:pointer}
+.warn{background:light-dark(#fff6d6,#3a3214);border-radius:12px;padding:12px 14px;font-size:15px}
+</style>
+</head>
+<body><main>
+<h1>SolveCam<span>!</span> 설치</h1>
+<p class="lead">책상 위 와이파이 카메라가 문제를 보고, 휴대폰·PC에서 답을 보여 주고 읽어 줘요.</p>
+
+<h2>1. 카메라에 프로그램 넣기 (PC 크롬·엣지)</h2>
+<ol>
+  <li>카메라를 USB로 PC에 연결해요. ESP32-CAM은 <b>ESP32-CAM-MB</b> 받침 보드에 끼워서 연결해요.</li>
+  <li>아래에서 내 보드의 <b>설치하기</b>를 누르고, 뜨는 목록에서 포트(USB, CH340 등)를 골라 <b>연결</b>해요.</li>
+  <li>"설치"를 누르면 1~2분 뒤 끝나요.</li>
+</ol>
+<div class="boards">
+  <div class="card"><b>AI-Thinker ESP32-CAM</b><span class="note">가장 흔한 1만 원대 카메라 보드</span>
+    <esp-web-install-button manifest="manifest-esp32cam.json"><button slot="activate">ESP32-CAM에 설치하기</button>
+      <span slot="unsupported">PC의 크롬이나 엣지 브라우저에서 열어 주세요.</span><span slot="not-allowed">https 주소에서만 설치할 수 있어요.</span></esp-web-install-button></div>
+  <div class="card"><b>XIAO ESP32S3 Sense</b><span class="note">카메라가 달린 작은 보드</span>
+    <esp-web-install-button manifest="manifest-xiao.json"><button slot="activate">XIAO S3에 설치하기</button>
+      <span slot="unsupported">PC의 크롬이나 엣지 브라우저에서 열어 주세요.</span><span slot="not-allowed">https 주소에서만 설치할 수 있어요.</span></esp-web-install-button></div>
+</div>
+<p class="warn">포트가 안 보이면: USB 선이 충전 전용이 아닌지 확인하고, CH340 드라이버를 설치해 주세요. 연결이 실패하면 보드의 <b>IO0(BOOT)</b> 버튼을 누른 채 <b>RST</b>를 한 번 눌렀다 떼고 다시 시도해 보세요.</p>
+
+<h2>2. 와이파이 연결 (휴대폰으로 1분)</h2>
+<ol>
+  <li>휴대폰 와이파이 목록에서 <code>SolveCam-Setup</code>에 연결해요. 설정 화면이 자동으로 떠요. 안 뜨면 브라우저에서 <code>192.168.4.1</code>을 열어요.</li>
+  <li>집 와이파이를 고르고 비밀번호를 넣어요. <b>2.4GHz</b> 와이파이만 연결돼요.</li>
+  <li>무료 Gemini 키도 넣어요 (<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → API 키 만들기 → 복사). 나중에 넣어도 돼요.</li>
+  <li>"연결됐어요!" 화면에 나온 주소를 적어 두세요. 예: <code>http://192.168.0.23</code></li>
+</ol>
+
+<h2>3. 쓰기</h2>
+<div class="card">
+  <ol>
+    <li>휴대폰을 집 와이파이로 돌리고, 휴대폰·PC 브라우저에서 그 주소(또는 <code>http://solvecam.local</code>)를 열어요. 즐겨찾기나 홈 화면에 추가해 두면 편해요.</li>
+    <li>카메라를 책상 위 30~40cm 높이에 아래를 보게 달아요. 거꾸로 보이면 설정 → 화면 돌리기.</li>
+    <li>문제를 카메라 아래에 두면, 페이지가 바뀔 때마다 자동으로 풀어요. 같은 페이지는 다시 풀지 않아요.</li>
+    <li>여러 기기를 켜 두면 한 기기만 풀고, 답은 모든 기기에 같이 떠요.</li>
+  </ol>
+  <p class="note">소리: 각 기기에서 화면을 한 번 눌러야 답을 읽어 줄 수 있어요(브라우저 규칙). 도서관에서는 이어폰을 쓰거나 '소리 꺼짐'으로 두세요.</p>
+</div>
+
+<h2>알아 두기</h2>
+<p class="note">Gemini 키는 카메라에 저장되고, 같은 와이파이에 있는 기기가 쓸 수 있어요. 집이나 내 공유기에서 쓰세요. Gemini 무료 등급은 보낸 사진과 글이 Google 서비스 개선에 쓰일 수 있어요. 아두이노 IDE로 직접 올리려면 저장소의 <code>wifi-camera/firmware/SolveCam</code> 폴더를 여세요.</p>
+</main></body></html>

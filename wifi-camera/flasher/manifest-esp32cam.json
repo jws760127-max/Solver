@@ -1,0 +1,8 @@
+{
+  "name": "SolveCam (AI-Thinker ESP32-CAM)",
+  "version": "1.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    { "chipFamily": "ESP32", "parts": [{ "path": "solvecam-esp32cam.bin", "offset": 0 }] }
+  ]
+}

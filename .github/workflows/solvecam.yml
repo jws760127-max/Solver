@@ -1,0 +1,70 @@
+name: SolveCam firmware
+
+on:
+  push:
+    branches: [main]
+    paths: ['wifi-camera/**', '.github/workflows/solvecam.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: solvecam-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Embed web page into firmware
+        run: python3 wifi-camera/tools/make_page.py
+
+      - uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP32 core
+        run: |
+          URL=https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index --additional-urls $URL
+          arduino-cli core install esp32:esp32@3.0.7 --additional-urls $URL
+
+      - name: Compile (AI-Thinker ESP32-CAM)
+        run: arduino-cli compile --fqbn esp32:esp32:esp32cam --export-binaries --output-dir out/esp32cam wifi-camera/firmware/SolveCam
+
+      - name: Compile (XIAO ESP32S3 Sense)
+        run: >
+          arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32S3:PSRAM=opi
+          --build-property "compiler.cpp.extra_flags=-DCAMERA_MODEL_XIAO_ESP32S3"
+          --export-binaries --output-dir out/xiao wifi-camera/firmware/SolveCam
+
+      - name: Assemble install page
+        run: |
+          ls -la out/esp32cam out/xiao
+          mkdir -p _site
+          cp wifi-camera/flasher/* _site/
+          cp out/esp32cam/SolveCam.ino.merged.bin _site/solvecam-esp32cam.bin
+          cp out/xiao/SolveCam.ino.merged.bin _site/solvecam-xiao-s3.bin
+          ls -la _site
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SolveCam-firmware
+          path: _site/*.bin
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

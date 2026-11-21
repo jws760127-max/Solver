@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2643b8">
+<title>SolveCam</title>
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'global'},startup:{typeset:false},options:{enableMenu:false}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<style>
+/* SolveCam — 책상 위 와이파이 카메라가 보는 화면 + 모눈 노트 풀이 */
+:root{color-scheme:light dark;
+--bg:light-dark(#f5f7fc,#0b1120);--grid:light-dark(#e2e8f4,#162036);--card:light-dark(#fff,#111a2d);
+--ink:light-dark(#141c35,#e9edf7);--mut:light-dark(#545e80,#9ca7c7);--line:light-dark(#d5dbea,#26324e);
+--blue:light-dark(#2643b8,#8ea4ff);--on:light-dark(#fff,#0b1120);--red:light-dark(#d62c1b,#ff6b57);
+--soft:light-dark(#eef2fc,#17213a);--pre:light-dark(#f8f9fc,#0d1424);--good:light-dark(#11804f,#5fd39a)}
+*{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
+body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;color:var(--ink);font:16px/1.6 system-ui,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;overflow-x:clip}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.top{max-width:1240px;margin:0 auto;padding:14px max(3vw,14px) 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.top b{font-size:22px;margin-right:auto}.top b span{color:var(--red)}
+.role{font-size:13px;font-weight:700;padding:6px 12px;border-radius:16px;background:var(--soft);color:var(--mut)}
+.role.on{background:var(--blue);color:var(--on)}
+.wrap{max-width:1240px;margin:0 auto;padding:8px max(3vw,14px) 40px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}.camcol{position:sticky;top:10px}}
+.camwrap{position:relative;background:#000;border-radius:16px;overflow:hidden;aspect-ratio:4/3}
+#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:transform .2s}
+.camerr{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#fff;padding:20px;background:#000c;font-size:15px}
+.status{margin:8px 2px;font-size:15px;color:var(--mut);min-height:48px;white-space:pre-line}
+.status b{color:var(--ink)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.pill{min-height:46px;padding:0 16px;border-radius:23px;border:1.5px solid var(--blue);background:var(--card);color:var(--blue);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:6px}
+.pill.fill{background:var(--blue);color:var(--on)}.pill.off{border-color:var(--line);color:var(--mut)}
+.tip{margin-top:10px;padding:10px 12px;border-radius:12px;background:light-dark(#fff6d6,#3a3214);font-size:14px}
+.rtop{display:flex;align-items:center;gap:8px;margin-bottom:8px;min-height:46px}.rtop span{margin-right:auto;font-size:14px;color:var(--mut);display:flex;align-items:center;gap:8px}
+.sheet{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px 20px 52px;box-shadow:0 14px 32px -22px rgb(20 30 80/.45);min-height:200px}
+.sheet::before{content:'';position:absolute;top:0;bottom:0;left:38px;width:2px;background:light-dark(#f1b2a9,#5b2b2b)}
+.shot{display:block;max-width:100%;max-height:160px;border-radius:10px;margin-bottom:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--blue);animation:pulse .8s ease-in-out infinite alternate;flex:none}
+@keyframes pulse{to{opacity:.25;transform:scale(.6)}}
+@media(prefers-reduced-motion:reduce){.dot{animation:none}#cam{transition:none}}
+.note{margin:0;font-size:14px;color:var(--mut)}.warn{color:var(--red)}.okc{color:var(--good)}
+.lbl{display:block;margin:0 0 6px;font-size:14px;font-weight:700;color:var(--mut)}
+.q{background:var(--soft);border-radius:12px;padding:12px 14px;margin:6px 0;font-size:16px}.q p,.ai p{margin:4px 0}
+.ans{display:flex;align-items:center;gap:14px;margin:14px 0 6px;padding:14px 16px;border:2px solid var(--red);border-radius:14px;font-size:21px;font-weight:700}.ans p{margin:0}.ans>div{flex:1}
+.mark{flex:none;width:52px;height:52px;border:2.5px solid var(--red);border-radius:50%;display:grid;place-items:center;font-size:20px;color:var(--red);transform:rotate(-8deg)}
+.voice{margin-top:10px;padding:10px 12px;border:1.5px dashed var(--blue);border-radius:12px;font-size:15px}.voice p{margin:4px 0 0}
+.sh{margin:20px 0 2px;font-size:14px;font-weight:700;color:var(--mut)}
+.step{position:relative;padding:10px 0 12px;border-bottom:1px dashed var(--line)}
+.step .n{position:absolute;left:-50px;width:32px;top:6px;text-align:right;font-size:26px;font-weight:700;color:var(--blue)}
+.step h4{margin:0 0 2px;font-size:16px;line-height:1.45}.step p{margin:5px 0}.step ul,.step ol{margin:5px 0;padding-left:1.3em}
+.key{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;margin-top:14px;background:var(--soft);border-radius:12px;padding:10px 12px}.key svg{margin-top:3px;color:var(--blue)}.key p{margin:0 0 4px}
+.mh{margin:8px 0 4px}
+code{font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere;background:var(--soft);padding:1px 5px;border-radius:5px}
+.code{margin:8px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden}.ch{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 2px 12px;background:var(--soft);font-size:13px;color:var(--mut)}
+.ch button{min-height:34px;border:0;background:none;color:var(--blue);font-weight:600;font-size:13px;padding:0 10px}
+.code pre{margin:0;padding:10px 12px;overflow-x:auto;background:var(--pre)}.code pre code{background:none;padding:0;white-space:pre;overflow-wrap:normal;font-size:13px}
+.scroll{overflow-x:auto;margin:8px 0}table{border-collapse:collapse;width:100%;font-size:15px}th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}th{color:var(--mut);font-size:14px}
+mjx-container[display=true]{overflow-x:auto;overflow-y:hidden;max-width:100%}
+.empty{color:var(--mut);padding:30px 0;text-align:center}
+dialog{border:0;border-radius:18px;padding:0;width:min(560px,calc(100% - 20px));max-height:calc(100dvh - 20px);background:var(--card);color:var(--ink);box-shadow:0 30px 80px -20px #000a}
+dialog::backdrop{background:#000a}
+.dlg{padding:22px 20px;display:grid;gap:14px}.dlg h2{margin:0;font-size:22px}.dlg h3{margin:6px 0 0;font-size:15px;color:var(--mut)}.dlg p{margin:0}
+.row{display:flex;gap:8px}.row input{flex:1;min-height:48px;font-size:16px;padding:0 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);font-family:ui-monospace,Menlo,monospace}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:12px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{flex:1;min-height:40px;border:0;border-radius:9px;background:none;font-weight:600;font-size:15px;white-space:nowrap;color:var(--ink);padding:0 8px}
+.seg button[aria-pressed=true]{background:var(--blue);color:var(--on)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1.5px solid var(--blue);background:none;color:var(--blue);font-weight:600;font-size:15px}
+.btn.fill{background:var(--blue);color:var(--on)}.btn.ghost{border-color:var(--line);color:var(--mut)}.btn.danger{border-color:var(--red);color:var(--red)}
+.dfoot{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header class="top"><b>SolveCam<span>!</span></b><span class="role" id="role">연결 중</span><button class="pill" id="setBtn" type="button">설정</button></header>
+<main class="wrap">
+  <section class="camcol" aria-label="카메라">
+    <div class="camwrap"><img id="cam" alt="카메라가 보는 화면"><div class="camerr" id="camErr">카메라에 연결하는 중이에요…</div></div>
+    <p class="status" id="status" role="status"></p>
+    <div class="btns">
+      <button class="pill fill" id="nowBtn" type="button">지금 풀기</button>
+      <button class="pill" id="autoBtn" type="button"></button>
+      <button class="pill" id="voiceBtn" type="button"></button>
+      <button class="pill" id="flashBtn" type="button" hidden>조명</button>
+    </div>
+    <div class="tip" id="soundTip" hidden>화면을 한 번 눌러 주세요. 그래야 이 기기에서 답을 소리로 읽어 줄 수 있어요.</div>
+  </section>
+  <section aria-label="풀이">
+    <div class="rtop"><span id="rstatus">아직 푼 문제가 없어요</span><button class="pill" id="sayBtn" type="button" hidden>다시 듣기</button></div>
+    <article class="sheet"><img class="shot" id="shot" alt="찍힌 문제" hidden><div id="rbody"><p class="empty">카메라 아래에 문제를 두면 자동으로 풀어요.</p></div></article>
+  </section>
+</main>
+
+<dialog id="setDlg" aria-labelledby="setTitle"><form class="dlg" method="dialog">
+  <h2 id="setTitle">설정</h2>
+  <h3>카메라에 저장 (모든 기기가 같이 써요)</h3>
+  <div><label class="lbl" for="keyIn">무료 Gemini 키</label><div class="row"><input id="keyIn" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false"><button class="btn fill" id="saveKey" type="button">저장</button></div>
+    <p class="note" style="margin-top:6px">받는 곳: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → API 키 만들기 → 복사. 무료 등급은 보낸 내용이 Google 서비스 개선에 쓰일 수 있어요.</p>
+    <p class="note" id="keyMsg" role="status"></p></div>
+  <div><span class="lbl">AI</span><div class="seg" id="modelSeg"><button type="button" data-v="fast">빠르게 (하루 수백 번)</button><button type="button" data-v="smart">똑똑하게 (하루 수십 번)</button></div></div>
+  <div><span class="lbl">자동 확인 간격</span><div class="seg" id="intSeg"><button type="button" data-v="5">5초</button><button type="button" data-v="10">10초</button><button type="button" data-v="20">20초</button><button type="button" data-v="30">30초</button></div></div>
+  <div><span class="lbl">화면 돌리기 (카메라를 거꾸로 달았을 때)</span><div class="seg" id="rotSeg"><button type="button" data-v="0">그대로</button><button type="button" data-v="90">90°</button><button type="button" data-v="180">180°</button><button type="button" data-v="270">270°</button></div></div>
+  <h3>이 기기에만 저장</h3>
+  <div><span class="lbl">이 기기의 역할</span><div class="seg" id="roleSeg"><button type="button" data-v="auto">풀이 맡기 (자동)</button><button type="button" data-v="view">보기만</button></div>
+    <p class="note" style="margin-top:6px">여러 기기를 켜 두면 한 기기만 풀고, 다른 기기는 답을 같이 보여 줘요.</p></div>
+  <div><span class="lbl">설명 수준</span><div class="seg" id="levelSeg"><button type="button" data-v="쉽게">쉽게</button><button type="button" data-v="보통">보통</button><button type="button" data-v="전문가">전문가</button></div></div>
+  <div><label class="lbl" for="rate">말 빠르기 <span id="rateTxt"></span></label><input type="range" id="rate" min="0.7" max="1.5" step="0.1"></div>
+  <div><span class="lbl">와이파이</span><button class="btn danger" id="forgetBtn" type="button">와이파이 다시 설정하기</button><p class="note" id="forgetMsg" style="margin-top:6px"></p></div>
+  <p class="note" id="boardTxt"></p>
+  <div class="dfoot"><button class="btn fill" value="close">닫기</button></div>
+</form></dialog>
+
+<script>
+{
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const LS={get(k,d){try{const v=localStorage.getItem('solvecam-'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('solvecam-'+k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const MODELS={fast:['gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-flash-lite-latest'],
+  smart:['gemini-3.8-flash','gemini-3.6-flash','gemini-flash-latest','gemini-3.5-flash-lite','gemini-3.1-flash-lite']};
+const LEVELS={'쉽게':'배경지식이 없는 초보자도 이해하도록 쉬운 말과 비유로','보통':'일반 성인이 이해할 수 있는 수준으로','전문가':'전문 용어를 써서 깊이 있고 간결하게'};
+const FENCE='```';
+const SYSTEM=['당신은 사진으로 받은 문제를 바로 풀어 주는 정확하고 친절한 선생님입니다. 수학, 과학, 영어, 국어, 코딩, 퍼즐, 생활 속 문제 등 어떤 종류든 다룹니다.',
+'- 먼저 속으로 꼼꼼히 풀고 계산을 다시 검산한 뒤에 답을 쓰세요.',
+'- 수식은 LaTeX로 쓰고 문장 속 수식은 \\( \\), 따로 보여줄 수식은 \\[ \\]로 감싸세요. 달러 기호는 쓰지 마세요.',
+'- 코드는 '+FENCE+' 코드 블록으로 쓰세요.',
+'- 한국어로 답하세요. 사용자가 다른 언어로 물으면 그 언어로 답하세요.',
+'- 첫 답변은 사용자가 준 [답변 형식]을 그대로 지키고, 앞뒤에 다른 말을 붙이지 마세요.',
+'- 그 뒤의 추가 질문에는 ## 머리말 없이 짧고 분명하게 답하세요.'].join('\n');
+const FMT=`## 문제
+(사진 속 문제를 그대로 옮겨 적기. 문제가 여러 개면 표시되어 있거나 가장 크게 보이는 문제 하나, 판단이 어려우면 첫 번째 문제)
+
+## 답
+(최종 답만 짧게)
+
+## 음성 안내
+(소리로 읽어 줄 2~3문장. 먼저 답을 말하고 핵심 이유를 짧게. 수식 기호, LaTeX, 괄호, 영어 약어 없이 말로 풀어 쓰기. 예: "엑스 제곱 빼기 오 엑스 더하기 육")
+
+## 풀이
+### (첫 단계 제목)
+(설명)
+### (다음 단계 제목)
+(설명)
+(단계는 2~5개. 제목 앞에 번호를 붙이지 마세요)
+
+## 핵심 포인트
+(기억할 점 한두 문장)
+
+사진에 풀 문제가 없거나 글자를 읽을 수 없으면 "## 문제" 아래에 이유만 짧게 쓰고, 다른 항목은 쓰지 마세요.`;
+const ICON_KEY='<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="8" r="5"/><path d="M8 16h4M10 13v3"/></svg>';
+const CHANGED=14,STABLE=8,G=24;
+
+let myId=LS.get('id','');if(!myId){myId=Math.random().toString(36).slice(2,10);LS.set('id',myId)}
+const S=Object.assign({level:'보통',voice:'on',rate:1,role:'auto',auto:true},LS.get('settings',{}));
+S.model='fast';
+let cfg={key:'',interval:10,model:'fast',flash:false,camera:true,rotation:0,board:''},key='';
+let busy=false,timers={},chain=Promise.resolve(),isSolver=false,lastRid=-1,activated=false,camUrl='';
+let frame={blob:null,sig:null},prevSig=null,solvedSig=null,nextAt=Date.now()+3000,note='';
+let cur={out:'',chat:[]};
+
+const inl=s=>s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+function md(s){const K=[],keep=(h,block)=>{K.push(h);const p='\u0000'+(K.length-1)+'\u0000';return block?'\n\n'+p+'\n\n':p};
+  s=s.replace(/```([\w#+.-]*)[^\n]*\n([\s\S]*?)(?:```|$)/g,(m,lang,code)=>keep(`<div class="code"><div class="ch"><span>${esc(lang||'코드')}</span><button type="button" class="cp">복사</button></div><pre><code>${esc(code.replace(/\n$/,''))}</code></pre></div>`,true));
+  s=s.replace(/\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)/g,m=>keep(esc(m)));
+  s=s.replace(/`([^`\n]+)`/g,(m,c)=>keep('<code>'+esc(c)+'</code>'));
+  const UL=/^\s*[-*•]\s+/,OL=/^\s*\d+[.)]\s+/;
+  const html=esc(s).trim().split(/\n\s*\n/).filter(b=>b.trim()).map(b=>{const L=b.split('\n').filter(l=>l.trim());
+    if(L.length===1&&/^\u0000\d+\u0000$/.test(L[0].trim()))return L[0].trim();
+    if(L.length>=2&&L.every(l=>l.trim().startsWith('|'))&&/^\|?[\s:|-]+$/.test(L[1].trim())){const row=l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>inl(c.trim()));
+      return`<div class="scroll"><table><thead><tr>${row(L[0]).map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${L.slice(2).map(l=>`<tr>${row(l).map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+    let o='',p=[],li=[],kind='';
+    const fp=()=>{if(p.length)o+='<p>'+p.map(inl).join('<br>')+'</p>';p=[]},fl=()=>{if(li.length)o+=`<${kind}>`+li.map(l=>'<li>'+inl(l)+'</li>').join('')+`</${kind}>`;li=[]};
+    for(const l of L){const hd=l.match(/^\s*#{1,6}\s+(.+)$/),k=UL.test(l)?'ul':OL.test(l)?'ol':'';
+      if(hd){fp();fl();kind='';o+=`<p class="mh"><strong>${inl(hd[1])}</strong></p>`}
+      else if(k){fp();if(k!==kind)fl();kind=k;li.push(l.replace(k==='ul'?UL:OL,''))}else{fl();kind='';p.push(l)}}
+    fp();fl();return o}).join('');
+  return html.replace(/\u0000(\d+)\u0000/g,(_,i)=>K[i])}
+function parse(out){const A=[];let c=null,fence=false;
+  for(const line of out.split('\n')){if(/^\s*```/.test(line))fence=!fence;
+    const h2=!fence&&line.match(/^##\s+(.+?)\s*$/),h3=!fence&&line.match(/^###\s+(.+?)\s*$/);
+    if(h2){c={title:h2[1],body:'',subs:[]};A.push(c);continue}
+    if(!c){c={title:'',body:'',subs:[]};A.push(c)}
+    if(h3){c.subs.push({title:h3[1],body:''});continue}
+    (c.subs.length?c.subs[c.subs.length-1]:c).body+=line+'\n'}return A}
+const fromH2=t=>{const i=t.search(/^## /m);return i>0?t.slice(i):t};
+const stripN=t=>t.replace(/^\s*(\d+\s*단계|단계\s*\d+|\d+)\s*[:.)\-–]?\s*/,'');
+const section=(out,word)=>{const s=parse(out||'').find(x=>x.title.includes(word));return s?s.body.trim():''};
+function blocks(){const B=[];
+  if(!cur.out&&busy==='solve')B.push('<p class="note">사진 속 문제를 읽고 푸는 중이에요…</p>');
+  for(const s of parse(cur.out)){const t=s.title,body=s.body.trim();
+    if(!t){if(body)B.push(md(body));continue}
+    if(t.includes('음성'))B.push(`<div class="voice"><span class="lbl">음성 안내</span><p>${esc(body)}</p></div>`);
+    else if(t.includes('문제'))B.push(`<span class="lbl">문제</span><div class="q">${md(body)}</div>`);
+    else if(t.includes('풀이')){B.push(`<h3 class="sh">풀이</h3>${body?md(body):''}`);s.subs.forEach((st,i)=>B.push(`<div class="step"><span class="n">${i+1}</span><h4>${md(stripN(st.title)).replace(/^<p>|<\/p>$/g,'')}</h4>${md(st.body)}</div>`))}
+    else if(t.includes('답'))B.push(`<div class="ans"><span class="mark">답</span><div>${md(body)}</div></div>`);
+    else if(t.includes('포인트')||t.includes('개념'))B.push(`<div class="key">${ICON_KEY}<div><span class="lbl">핵심 포인트</span>${md(body)}</div></div>`);
+    else B.push(`<h3 class="sh">${esc(t)}</h3>${md(body)}`)}
+  if(cur.err)B.push(`<p class="note warn" style="margin-top:12px">${esc(cur.err)}</p>`);
+  return B}
+
+function tex(el,n=0){const MJ=window.MathJax;if(MJ&&MJ.typesetPromise)chain=chain.then(()=>MJ.startup.promise).then(()=>MJ.typesetPromise([el])).catch(()=>{});else if(n<80)setTimeout(()=>tex(el,n+1),250)}
+function clearMath(el){const MJ=window.MathJax;if(MJ&&MJ.typesetClear)try{MJ.typesetClear([el])}catch(e){}}
+function sync(box,H,final){const k=box.children;H.forEach((h,i)=>{let el=k[i];if(!el){el=document.createElement('div');box.appendChild(el)}
+  if(el._h!==h){clearMath(el);el.innerHTML=h;el._h=h;el._t=0}
+  if((final||i<H.length-1)&&!el._t){el._t=1;tex(el)}});while(k.length>H.length)box.lastChild.remove()}
+function reset(box){clearMath(box);box.innerHTML=''}
+function sched(name,fn){if(timers[name])return;timers[name]=setTimeout(()=>{timers[name]=0;fn()},100)}
+function sched(n,fn){if(timers[n])return;timers[n]=setTimeout(()=>{timers[n]=0;fn()},100)}
+
+const synth=('speechSynthesis'in window&&window.SpeechSynthesisUtterance)?window.speechSynthesis:null;
+let koVoice=null,speaking=false,sid=0,unlocked=false;
+function pickVoice(){try{const vs=synth.getVoices();koVoice=vs.find(v=>/^ko/i.test(v.lang)&&/google|samsung|yuna|sora|heami|sunhi/i.test(v.name))||vs.find(v=>/^ko/i.test(v.lang))||null}catch(e){}}
+if(synth){pickVoice();try{synth.addEventListener('voiceschanged',pickVoice)}catch(e){}}
+function unlock(){if(!synth||unlocked)return;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;synth.speak(u);unlocked=true}catch(e){}}
+function plainSpeech(t){return(t||'').replace(/```[\s\S]*?(```|$)/g,' 코드는 화면을 봐 주세요. ')
+  .replace(/\\\(([\s\S]*?)\\\)|\\\[([\s\S]*?)\\\]/g,(m,a,b)=>' '+mathWords(a??b)+' ')
+  .replace(/`([^`]*)`/g,'$1').replace(/\*\*|__|^#+\s*|^\s*[-*•]\s+|\|/gm,' ').replace(/[ \t]+/g,' ').trim()}
+function mathWords(m){return m.replace(/\\[dt]?frac\{([^}]*)\}\{([^}]*)\}/g,'$2 분의 $1').replace(/\\sqrt\{([^}]*)\}/g,'루트 $1')
+  .replace(/\^\{?2\}?/g,' 제곱').replace(/\^\{?3\}?/g,' 세제곱').replace(/\^\{([^}]*)\}|\^(\w)/g,(x,a,b)=>` ${a??b} 제곱`)
+  .replace(/\\times|\\cdot/g,' 곱하기 ').replace(/\\div/g,' 나누기 ').replace(/\\pm/g,' 플러스 마이너스 ').replace(/\\le(q)?/g,' 이하 ').replace(/\\ge(q)?/g,' 이상 ').replace(/\\neq?/g,' 같지 않음 ')
+  .replace(/\\pi/g,'파이').replace(/\\theta/g,'세타').replace(/\\infty/g,'무한대').replace(/\\int/g,'적분').replace(/\\sum/g,'합')
+  .replace(/\\[a-zA-Z]+/g,' ').replace(/=/g,' 는 ').replace(/\+/g,' 더하기 ').replace(/(\S)\s*-\s*/g,'$1 빼기 ').replace(/^-/,'마이너스 ').replace(/[{}]/g,'').replace(/\s+/g,' ').trim()}
+function speak(text){text=(text||'').trim();if(!text||!synth)return;stopSpeak();const my=++sid;speaking=true;paintVoice();
+  try{const parts=text.match(/[^.!?\n]+[.!?]*/g)||[text];
+    parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p.trim());u.lang='ko-KR';if(koVoice)u.voice=koVoice;u.rate=+S.rate||1;
+      if(i===parts.length-1)u.onend=u.onerror=()=>{if(my===sid){speaking=false;paintVoice()}};synth.speak(u)})}catch(e){speaking=false;paintVoice()}}
+function stopSpeak(){sid++;try{synth&&synth.cancel()}catch(e){}speaking=false;paintVoice()}
+function spokenText(){const v=section(cur.out,'음성');if(v)return v;const a=section(cur.out,'답');if(a)return'답은 '+plainSpeech(a)+' 이에요.';
+  return cur.out?'사진에서 문제를 잘 읽지 못했어요. 문제에 더 가까이, 밝은 곳에서 다시 찍어 주세요.':''}
+function paintVoice(){const b=$('#sayBtn');b.hidden=!synth||!cur.out||busy;b.textContent=speaking?'멈추기':'다시 듣기'}
+const voiceOk=()=>S.voice==='on'&&activated;
+
+function gErr(status,m,st){m=m||'';let msg,needKey=false;
+  if(status==='network')msg='인터넷에 연결되지 않았어요. 와이파이나 데이터를 확인해 주세요.';
+  else if(/API key not valid|API_KEY_INVALID|invalid api key/i.test(m)){msg='Gemini 키가 올바르지 않아요. 설정에서 키를 다시 넣어 주세요.';needKey=true}
+  else if(status===403){msg='이 키로는 Gemini를 쓸 수 없어요. AI Studio에서 새 키를 만들어 넣어 주세요.';needKey=true}
+  else if(status===429)msg='무료 사용량이 잠시 다 찼어요. 1분쯤 뒤에 다시 찍어 보세요. 계속 안 되면 오늘 몫을 다 쓴 거라, 한국 시간 오후 5시쯤 다시 채워져요. 설정에서 "빠르게"를 고르면 더 많이 쓸 수 있어요.';
+  else if(/location|region/i.test(m))msg='지금 위치에서는 Gemini API를 쓸 수 없어요.';
+  else if(status===413||/too large|size/i.test(m))msg='사진이 너무 커요. 조금 멀리서 다시 찍어 주세요.';
+  else if(status>=500)msg='Gemini 서버가 바빠요. 잠시 후 다시 찍어 주세요.';
+  else msg='문제가 생겼어요'+(m?`: ${m}`:'. 다시 시도해 주세요.');
+  const e=new Error(msg);e.status=status;e.needKey=needKey;return e}
+async function gemini(contents,onText,signal){const chain=MODELS[S.model];let last=null,think=true;
+  for(let i=0;i<chain.length;i++){const model=chain[i];
+    const body={systemInstruction:{parts:[{text:SYSTEM}]},contents,generationConfig:{maxOutputTokens:8192}};
+    if(think)body.generationConfig.thinkingConfig={thinkingLevel:'MEDIUM'};
+    let res;try{res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,{method:'POST',signal,headers:{'content-type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)})}
+    catch(e){if(signal&&signal.aborted)throw e;throw gErr('network')}
+    if(!res.ok){const j=await res.json().catch(()=>({})),m=(j.error&&j.error.message)||'',st=(j.error&&j.error.status)||'';
+      if(res.status===400&&think&&/think/i.test(m)){think=false;i--;continue}
+      if(res.status===404||res.status===429||res.status>=500||(res.status===400&&/model/i.test(m)&&!/key/i.test(m))){last=gErr(res.status,m,st);continue}
+      throw gErr(res.status,m,st)}
+    const reader=res.body.getReader(),dec=new TextDecoder();let buf='',text='',finish='';
+    const eat=chunk=>{const data=chunk.split('\n').filter(l=>l.startsWith('data:')).map(l=>l.slice(5).trim()).join('');if(!data)return;let ev;try{ev=JSON.parse(data)}catch(e){return}
+      if(ev.error)throw gErr(ev.error.code,ev.error.message,ev.error.status);
+      const c=ev.candidates&&ev.candidates[0];
+      if(c){((c.content&&c.content.parts)||[]).forEach(p=>{if(p.text&&!p.thought){text+=p.text;onText&&onText(text)}});if(c.finishReason)finish=c.finishReason}
+      else if(ev.promptFeedback&&ev.promptFeedback.blockReason)finish='BLOCKED'};
+    while(true){const{value,done}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true}).replace(/\r/g,'');let k;while((k=buf.indexOf('\n\n'))>=0){eat(buf.slice(0,k));buf=buf.slice(k+2)}}
+    if(buf.trim())eat(buf);
+    return{text,finish,model}}
+  throw last||gErr('unknown')}
+
+/* ───────── 카메라 ───────── */
+function api(path,opt){return fetch(path,Object.assign({cache:'no-store'},opt||{}))}
+async function loadConfig(){try{const j=await(await api('/config')).json();Object.assign(cfg,j);key=cfg.key||'';S.model=cfg.model==='smart'?'smart':'fast';applyRot();
+  $('#flashBtn').hidden=!cfg.flash;$('#boardTxt').textContent=cfg.board?`카메라: ${cfg.board}`:'';return true}catch(e){return false}}
+async function saveConfig(o){const r=await api('/config',{method:'POST',body:new URLSearchParams(o)});if(!r.ok)throw new Error('save');await loadConfig()}
+function applyRot(){$('#cam').style.transform=cfg.rotation?`rotate(${cfg.rotation}deg)${cfg.rotation%180?' scale(.75)':''}`:''}
+async function signature(blob){const bmp=await createImageBitmap(blob);const c=document.createElement('canvas');c.width=G;c.height=G;const x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(bmp,0,0,G,G);if(bmp.close)bmp.close();const d=x.getImageData(0,0,G,G).data,s=new Float32Array(G*G);let m=0;
+  for(let i=0;i<G*G;i++){s[i]=d[i*4]*.299+d[i*4+1]*.587+d[i*4+2]*.114;m+=s[i]}m/=G*G;for(let i=0;i<s.length;i++)s[i]-=m;return s}
+const diff=(a,b)=>{if(!a||!b||a.length!==b.length)return 999;let d=0;for(let i=0;i<a.length;i++)d+=Math.abs(a[i]-b[i]);return d/a.length};
+async function rotated(blob){if(!cfg.rotation)return blob;const bmp=await createImageBitmap(blob),r=cfg.rotation,c=document.createElement('canvas');
+  c.width=r%180?bmp.height:bmp.width;c.height=r%180?bmp.width:bmp.height;const x=c.getContext('2d');x.translate(c.width/2,c.height/2);x.rotate(r*Math.PI/180);x.drawImage(bmp,-bmp.width/2,-bmp.height/2);
+  return new Promise(res=>c.toBlob(b=>res(b||blob),'image/jpeg',.9))}
+let camFails=0;
+async function pull(){
+  if(!document.hidden){try{const r=await api('/capture?t='+Date.now());
+      if(r.status===500)throw new Error('cam');if(!r.ok)throw new Error('busy');
+      const blob=await r.blob(),u=URL.createObjectURL(blob),img=$('#cam'),old=camUrl;camUrl=u;img.src=u;if(old)setTimeout(()=>URL.revokeObjectURL(old),2000);
+      const sig=await signature(blob);prevSig=frame.sig;frame={blob,sig};camFails=0;$('#camErr').hidden=true}
+    catch(e){camFails++;if(e.message==='cam'||camFails>2){$('#camErr').hidden=false;$('#camErr').textContent=e.message==='cam'?'카메라 모듈을 찾지 못했어요. 카메라 선(리본 케이블)이 잘 꽂혔는지 확인해 주세요.':'카메라에 연결하는 중이에요… 카메라 전원과 와이파이를 확인해 주세요.'}}}
+  setTimeout(pull,isSolver?900:2000)}
+
+/* ───────── 여러 기기 조율: 한 기기만 풀고 결과는 같이 봐요 ───────── */
+async function hello(){try{const want=S.role==='auto'&&S.auto?1:0;const j=await(await api(`/hello?id=${myId}&want=${want}`,{method:'POST'})).json();
+    const was=isSolver;isSolver=j.solver===myId;if(isSolver&&!was)nextAt=Date.now()+2000;
+    const r=$('#role');r.classList.toggle('on',isSolver);r.textContent=isSolver?'이 기기가 풀이 담당':j.solver?'다른 기기가 푸는 중 · 답은 여기도 떠요':'풀이 담당 없음';
+    if(j.rid!==lastRid){const first=lastRid<0;lastRid=j.rid;if(j.rid>0)await fetchResult(first)}}catch(e){}
+  setTimeout(hello,3000)}
+async function fetchResult(quiet){try{const j=await(await api('/result')).json();if(!j||!j.text||j.from===myId||(cur.id&&j.at===cur.id))return;
+  stopSpeak();cur={id:j.at,out:j.text,thumb:j.thumb||'',chat:[],remote:true};showShot(cur.thumb);reset($('#rbody'));paint(true);
+  if(!quiet&&voiceOk())speak(spokenText())}catch(e){}}
+
+/* ───────── 풀기 ───────── */
+function showShot(src){const s=$('#shot');if(src){s.src=src;s.hidden=false}else s.hidden=true}
+function paint(final){sync($('#rbody'),blocks(),final);const st=$('#rstatus');
+  st.innerHTML=busy?`<span class="dot"></span>${cur.out?'풀이를 적는 중':'문제를 읽는 중'}`:cur.id?esc((cur.remote?'다른 기기가 푼 답 · ':'')+new Date(cur.id).toLocaleTimeString('ko-KR',{hour:'numeric',minute:'2-digit'})):'아직 푼 문제가 없어요';paintVoice()}
+function maybeSpeakEarly(){if(cur.spoken||!voiceOk())return;const A=parse(cur.out),i=A.findIndex(x=>x.title.includes('음성'));if(i>=0&&A.length>i+1&&A[i].body.trim()){cur.spoken=true;speak(A[i].body.trim())}}
+async function solveFrame(f,manual){if(busy||!f||!f.blob)return;
+  if(!key){note='먼저 설정에서 무료 Gemini 키를 넣어 주세요';openSet();return}
+  busy='solve';stopSpeak();const sig=f.sig;
+  try{const blob=await rotated(f.blob),thumb=await shrinkUrl(blob);
+    cur={id:Date.now(),out:'',chat:[],thumb,spoken:false,err:''};showShot(thumb);reset($('#rbody'));paint();status();
+    const contents=[{role:'user',parts:[{inlineData:{mimeType:'image/jpeg',data:await b64(blob)}},{text:`[설명 수준] ${LEVELS[S.level]} 설명하세요.\n\n[답변 형식]\n${FMT}`}]}];
+    const r=await gemini(contents,t=>{cur.out=fromH2(t);sched('p',()=>{paint();maybeSpeakEarly()})},null);
+    cur.out=fromH2(r.text);
+    if(r.finish==='MAX_TOKENS')cur.err='답이 길어서 끝이 조금 잘렸어요.';
+    solvedSig=sig;
+    if(section(cur.out,'답')){note='풀었어요';api('/result',{method:'POST',headers:{'content-type':'text/plain;charset=UTF-8'},body:JSON.stringify({text:cur.out,from:myId,at:cur.id,thumb})}).catch(()=>{})}
+    else{note='문제가 안 보여요. 문제를 카메라 가운데에 두세요';if(!manual){cur={out:'',chat:[]};showShot('');$('#rbody').innerHTML='<p class="empty">카메라 아래에 문제를 두면 자동으로 풀어요.</p>'}}
+    nextAt=Date.now()+cfg.interval*1000}
+  catch(e){note=e.message||'풀지 못했어요';cur.err=note;nextAt=Date.now()+(e.status===429?60000:cfg.interval*1000);if(e.needKey)openSet(e.message)}
+  busy=false;if(cur.id)paint(true);status();
+  if(cur.out&&section(cur.out,'답')&&!cur.spoken&&voiceOk()){cur.spoken=true;speak(spokenText())}}
+const b64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)});
+async function shrinkUrl(blob){try{const bmp=await createImageBitmap(blob),k=240/Math.max(bmp.width,bmp.height),c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.7)}catch(e){return''}}
+
+/* ───────── 자동 확인 (1초마다) ───────── */
+function status(t){$('#status').innerHTML=t!=null?t:(note?esc(note):'')}
+function tick(){setTimeout(tick,1000);if(busy)return;
+  if(!S.auto){status('자동 풀이가 꺼져 있어요. <b>지금 풀기</b>를 누르면 풀어요');return}
+  if(!isSolver){status(S.role==='view'?'이 기기는 보기만 해요. 다른 기기가 푼 답이 여기 떠요':'다른 기기가 풀이를 맡고 있어요. 답은 여기도 떠요');return}
+  const left=nextAt-Date.now();if(left>0){status(`${note?esc(note)+'\n':''}<b>${Math.ceil(left/1000)}초</b> 뒤 확인해요 · 페이지가 바뀌면 자동으로 풀어요`);return}
+  if(!frame.sig||!prevSig)return;
+  if(diff(frame.sig,prevSig)>STABLE){status('움직이고 있어요. 잠깐 멈춰 주세요');nextAt=Date.now()+1000;return}
+  if(solvedSig&&diff(frame.sig,solvedSig)<CHANGED){note='같은 페이지예요. 다음 문제로 넘기면 풀어요';nextAt=Date.now()+cfg.interval*1000;return}
+  solveFrame(frame,false)}
+
+/* ───────── 화면 ───────── */
+function seg(id,v){$$(`#${id} button`).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v)===String(v)))}
+function paintButtons(){const a=$('#autoBtn');a.textContent=S.auto?'자동 풀이 켜짐':'자동 풀이 꺼짐';a.classList.toggle('off',!S.auto);
+  const v=$('#voiceBtn');v.textContent=S.voice==='on'?'소리 켜짐':'소리 꺼짐';v.classList.toggle('off',S.voice!=='on');
+  $('#soundTip').hidden=activated||S.voice!=='on'||!synth}
+function openSet(msg){const d=$('#setDlg');$('#keyIn').value=key;$('#keyMsg').textContent=msg||(key?'✓ 키가 카메라에 저장돼 있어요':'아직 키가 없어요');$('#keyMsg').className='note '+(msg||!key?'warn':'okc');
+  seg('modelSeg',cfg.model);seg('intSeg',cfg.interval);seg('rotSeg',cfg.rotation||0);seg('roleSeg',S.role);seg('levelSeg',S.level);$('#rate').value=S.rate;$('#rateTxt').textContent='×'+(+S.rate).toFixed(1);
+  $('#forgetMsg').textContent='';$('#forgetBtn').dataset.sure='';if(!d.open)d.showModal()}
+const saveS=()=>LS.set('settings',S);
+$('#saveKey').addEventListener('click',async()=>{const k=$('#keyIn').value.trim();if(!k){$('#keyMsg').textContent='키를 붙여넣어 주세요';return}
+  try{await saveConfig({key:k});$('#keyMsg').textContent='✓ 카메라에 저장했어요. 이제 모든 기기가 이 키로 풀어요';$('#keyMsg').className='note okc'}catch(e){$('#keyMsg').textContent='카메라에 저장하지 못했어요. 와이파이 연결을 확인해 주세요';$('#keyMsg').className='note warn'}});
+[['modelSeg','model'],['intSeg','interval'],['rotSeg','rotation']].forEach(([id,k])=>$('#'+id).addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;seg(id,b.dataset.v);try{await saveConfig({[k]:b.dataset.v})}catch(x){}}));
+[['roleSeg','role'],['levelSeg','level']].forEach(([id,k])=>$('#'+id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S[k]=b.dataset.v;saveS();seg(id,S[k])}));
+$('#rate').addEventListener('input',e=>{S.rate=+e.target.value;$('#rateTxt').textContent='×'+S.rate.toFixed(1);saveS()});
+$('#forgetBtn').addEventListener('click',async()=>{const b=$('#forgetBtn');if(!b.dataset.sure){b.dataset.sure='1';b.textContent='정말 다시 설정할까요? 한 번 더 누르세요';return}
+  try{await api('/forget',{method:'POST'})}catch(e){}$('#forgetMsg').textContent="카메라가 다시 켜져요. 휴대폰 와이파이 목록에서 'SolveCam-Setup'에 연결해 새로 설정해 주세요.";b.textContent='와이파이 다시 설정하기'});
+$$('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d)d.close()}));
+$('#setBtn').addEventListener('click',()=>openSet());
+$('#nowBtn').addEventListener('click',()=>{unlock();solveFrame(frame,true)});
+$('#autoBtn').addEventListener('click',()=>{S.auto=!S.auto;saveS();paintButtons();nextAt=Date.now()+1500});
+$('#voiceBtn').addEventListener('click',()=>{S.voice=S.voice==='on'?'off':'on';saveS();if(S.voice!=='on')stopSpeak();paintButtons()});
+$('#sayBtn').addEventListener('click',()=>{if(speaking)stopSpeak();else speak(spokenText())});
+let flashOn=false;$('#flashBtn').addEventListener('click',async()=>{flashOn=!flashOn;try{await api('/flash?on='+(flashOn?1:0),{method:'POST'})}catch(e){}$('#flashBtn').classList.toggle('fill',flashOn)});
+const activate=()=>{if(activated)return;activated=true;unlock();paintButtons()};
+document.addEventListener('pointerdown',activate);document.addEventListener('keydown',activate);
+document.addEventListener('click',async e=>{const b=e.target.closest('.cp');if(!b)return;try{await navigator.clipboard.writeText(b.closest('.code').querySelector('code').textContent);b.textContent='복사했어요'}catch(x){b.textContent='복사 실패'}setTimeout(()=>b.textContent='복사',1500)});
+
+(async()=>{paintButtons();for(let i=0;i<20&&!(await loadConfig());i++)await sleep(1500);
+  if(!key)setTimeout(()=>openSet('먼저 무료 Gemini 키를 넣어 주세요. 카메라에 저장돼서 다른 기기는 다시 안 넣어도 돼요.'),600);
+  pull();hello();tick()})();
+}
+</script>
+</body>
+</html>
